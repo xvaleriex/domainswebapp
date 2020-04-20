@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load static %}
+{% block page_content %}
+<div style="margin-left=50px">
+	<h1>{{ domain.fqdn }}</h1>
+	<div class="row">
+		<table class="table table-hover">
+			<thead>
+			<tr>
+			<th scope="col">Creation time</th>
+			<th scope="col">Expiration time</th>
+			<th scope="col">Deletion time</th>			
+			<th scope="col">Active flags</th>
+			</tr>
+			</thead>	
+		<tbody>
+			<tr class="table-primary">
+			<td>{{ domain.datetime_creation }}</td>
+			<td>{{ domain.datetime_expiration }}</td>
+			<td>{{ domain.datetime_deletion }}</td>
+			<td>
+				{% for flag in domain.domainflag_set.all %}
+				{% if flag.is_active %}
+					{{ flag.type }}
+					{{ flag.datetime_from }}
+					{{ flag.datetime_to }}
+					<br>
+				{% endif %}
+				{% endfor %}
+			</td>
+			</tr>
+		</tbody>
+		</table>
+	    </div>
+</div>
+{% endblock %}
+
