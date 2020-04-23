@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from domainslist.models import Domain, DomainFlag
+from domainslist.models import Domain
 from datetime import datetime
 
 
