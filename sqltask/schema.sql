@@ -5,10 +5,11 @@ CREATE TABLE DOMAIN (
     PRIMARY KEY (fqdn)
 );
 
-CREATE OR REPLACE FUNCTION verifydomain2 ()
+CREATE OR REPLACE FUNCTION verifydomain ()
     RETURNS TRIGGER
     AS $body$
 BEGIN
+    ---First, check if table is empty, if it is return new
     PERFORM
         1
     FROM
@@ -17,6 +18,7 @@ BEGIN
     IF NOT FOUND THEN
         RETURN NEW;
     END IF;
+    ---if domain with same name found and is not unregistered yet, do not let change entry and raise exception
     PERFORM
         1
     FROM
@@ -28,14 +30,15 @@ BEGIN
     IF FOUND AND NEW.datetime_unregistered IS NULL THEN
         RAISE exception 'Domains cannot overlapse.';
     END IF;
+    ---otherwise let user do the change
     RETURN new;
 END;
 $body$
 LANGUAGE plpgsql;
 
-CREATE TRIGGER verify_domain_notexists2
+CREATE TRIGGER verify_domain_notexists
     BEFORE INSERT OR UPDATE ON DOMAIN FOR EACH ROW
-    EXECUTE PROCEDURE verifydomain2 ();
+    EXECUTE PROCEDURE verifydomain ();
 
 CREATE TYPE flag_types_choices AS enum (
     'EXPIRED',
@@ -55,6 +58,7 @@ CREATE FUNCTION verify_date ()
     RETURNS TRIGGER
     AS $body$
 BEGIN
+    ---First, check if table is empty, if it is then return new
     PERFORM
         1
     FROM
@@ -63,9 +67,11 @@ BEGIN
     IF NOT FOUND THEN
         RETURN NEW;
     END IF;
+    ---check if entry that is intended to change is different then datetime_to, then raise exception
     IF OLD.domain_fqdn != NEW.domain_fqdn OR OLD.flag_type != NEW.flag_type OR OLD.datetime_from != NEW.datetime_to THEN
         RAISE exception 'Fields except for datetime_to cannot be changed.', new;
     END IF;
+    ---check if wanted time is not in the past
     IF NEW.datetime_to < CURRENT_TIMESTAMP THEN
         RAISE exception 'Datetime_to cannot be set to the past.';
     END IF;
