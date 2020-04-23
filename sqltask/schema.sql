@@ -69,7 +69,7 @@ BEGIN
     END IF;
     ---check if entry that is intended to change is different then datetime_to, then raise exception
     IF OLD.domain_fqdn != NEW.domain_fqdn OR OLD.flag_type != NEW.flag_type OR OLD.datetime_from != NEW.datetime_to THEN
-        RAISE exception 'Fields except for datetime_to cannot be changed.', new;
+        RAISE exception 'Fields except for datetime_to cannot be changed.';
     END IF;
     ---check if wanted time is not in the past
     IF NEW.datetime_to < CURRENT_TIMESTAMP THEN
@@ -82,7 +82,26 @@ LANGUAGE plpgsql;
 
 CREATE TRIGGER check_date_notpast
     BEFORE INSERT OR UPDATE ON domain_flag FOR EACH ROW
-    EXECUTE PROCEDURE verify_date ();
- 
+    EXECUTE PROCEDURE verify_date();
+
+SELECT
+    domain_fqdn
+FROM
+    domain_flag
+WHERE
+    flag_type = 'EXPIRED'
+    OR flag_type = 'OUTZONE'
+    AND datetime_to < CURRENT_TIMESTAMP;
+
+SELECT
+    domain.fqdn
+FROM
+    DOMAIN
+    INNER JOIN domain_flag ON (domain.fqdn = domain_flag.domain_fqdn)
+WHERE
+    domain_flag.flag_type = 'EXPIRED'
+    AND domain_flag.datetime_from < CURRENT_TIMESTAMP
+    AND domain_flag.datetime_to > CURRENT_TIMESTAMP;
+
 
  
